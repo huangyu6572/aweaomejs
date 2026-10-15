@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FBA 利润速算器 · 交互演示</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(160deg, #f4f7fc 0%, #e9f0fb 100%);
+    color: #1a2029; min-height: 100vh; padding: 28px 20px 60px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  .hero { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
+  .hero .logo {
+    width: 46px; height: 46px; border-radius: 12px;
+    background: linear-gradient(135deg, #1f6feb, #2f8af5); color: #fff;
+    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px;
+    box-shadow: 0 6px 16px rgba(31,111,235,.28);
+  }
+  .hero h1 { font-size: 23px; font-weight: 800; letter-spacing: -.4px; }
+  .hero p { font-size: 13px; color: #6b7684; margin-top: 2px; }
+
+  .layout { display: grid; grid-template-columns: 400px 1fr; gap: 20px; margin-top: 24px; align-items: start; }
+  @media (max-width: 920px) { .layout { grid-template-columns: 1fr; } }
+
+  .card {
+    background: #fff; border: 1px solid #e6eaf0; border-radius: 14px; padding: 18px;
+    box-shadow: 0 4px 16px rgba(15,23,42,.05);
+  }
+  .card + .card { margin-top: 16px; }
+  .card-title {
+    font-size: 11.5px; font-weight: 700; color: #6b7684; text-transform: uppercase;
+    letter-spacing: .6px; margin-bottom: 13px; display: flex; align-items: center; gap: 8px;
+  }
+  .card-title::after { content: ""; flex: 1; height: 1px; background: #eef0f3; }
+
+  .sites { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .sites button {
+    padding: 6px 12px; border-radius: 999px; border: 1px solid #e2e7ee; background: #fff;
+    font-size: 12.5px; color: #55606e; cursor: pointer; font-family: inherit; transition: all .14s;
+    font-weight: 500;
+  }
+  .sites button:hover { border-color: #b9d6fb; background: #f5f9ff; }
+  .sites button.on {
+    background: #e8f1ff; border-color: #2f8af5; color: #1f6feb; font-weight: 700;
+    box-shadow: 0 0 0 3px rgba(47,138,245,.1);
+  }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .row.three { grid-template-columns: 1fr 1fr 1fr; }
+  .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+  .field label { font-size: 11.5px; color: #6b7684; font-weight: 500; }
+  .ip { position: relative; display: flex; align-items: center; }
+  .ip .pre { position: absolute; left: 10px; font-size: 12px; color: #97a0ad; pointer-events: none; }
+  .ip input { padding-left: 24px; }
+  input, select {
+    width: 100%; border: 1px solid #dfe3e8; border-radius: 9px; padding: 9px 10px;
+    font-size: 13.5px; color: #1a2029; background: #fff; outline: none;
+    transition: border-color .15s, box-shadow .15s; font-family: inherit;
+  }
+  input:focus, select:focus { border-color: #2f8af5; box-shadow: 0 0 0 3px rgba(47,138,245,.13); }
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
+
+  .slider-row { display: flex; align-items: center; gap: 10px; }
+  input[type=range] { flex: 1; accent-color: #2f8af5; height: 4px; }
+  .slider-val {
+    font-size: 12.5px; font-weight: 700; color: #1f6feb; min-width: 46px; text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .chk { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: #4a5563; cursor: pointer; }
+  .chk input { width: 15px; height: 15px; accent-color: #2f8af5; }
+
+  /* 结果区 */
+  .result-hero {
+    background: linear-gradient(140deg, #fbfcfe 0%, #f4f8fd 100%);
+    border: 1px solid #e8ecf1; border-radius: 14px; padding: 20px;
+  }
+  .rh-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .rh-label { font-size: 12px; color: #6b7684; font-weight: 500; margin-bottom: 4px; }
+  .rh-profit { font-size: 44px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; }
+  .rh-profit.pos { color: #d92b2b; }
+  .rh-profit.neg { color: #12924f; }
+  .rh-side { text-align: right; }
+  .rh-margin { font-size: 30px; font-weight: 800; letter-spacing: -.8px; line-height: 1; }
+  .rh-sub { font-size: 12px; color: #8b95a3; margin-top: 5px; }
+
+  .verdict {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 14px; padding: 6px 13px; border-radius: 999px;
+    font-size: 12.5px; font-weight: 700;
+  }
+  .verdict.good { background: #fdecec; color: #c62828; }
+  .verdict.mid  { background: #fff4e5; color: #b26a00; }
+  .verdict.bad  { background: #e8f5ee; color: #0f7a44; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 16px; }
+  @media (max-width: 700px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+  .kpi {
+    background: #fff; border: 1px solid #e8ecf1; border-radius: 11px; padding: 11px 12px;
+  }
+  .kpi .k { font-size: 10.5px; color: #808b99; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+  .kpi .v { font-size: 18px; font-weight: 800; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .kpi .v.pos { color: #d92b2b; }
+  .kpi .v.neg { color: #12924f; }
+  .kpi .hint { font-size: 10.5px; color: #97a0ad; margin-top: 2px; }
+
+  /* 条形图 */
+  .bar {
+    display: flex; height: 26px; border-radius: 8px; overflow: hidden; background: #eef0f3;
+    margin: 18px 0 14px; border: 1px solid #e6eaf0;
+  }
+  .bar > div {
+    height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 10.5px; color: #fff; font-weight: 700; transition: width .35s cubic-bezier(.4,0,.2,1);
+    overflow: hidden; white-space: nowrap;
+  }
+
+  table.detail { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.detail td { padding: 8px 4px; border-bottom: 1px solid #f2f5f9; }
+  table.detail tr:last-child td { border-bottom: none; }
+  table.detail td:first-child { color: #4a5563; }
+  table.detail td:last-child { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+  table.detail tr.total td { border-top: 2px solid #e8ecf1; padding-top: 11px; font-weight: 800; font-size: 14px; }
+  table.detail .dot {
+    display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 8px;
+    vertical-align: middle;
+  }
+  table.detail tr.sub td { color: #808b99; font-size: 12.5px; }
+  table.detail tr.sub td:last-child { font-weight: 500; }
+
+  /* 价格敏感度 */
+  .sens { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 4px; }
+  .sens th, .sens td { padding: 7px 6px; text-align: right; border-bottom: 1px solid #f2f5f9; }
+  .sens th { font-size: 10.5px; color: #808b99; text-transform: uppercase; font-weight: 600; text-align: right; }
+  .sens th:first-child, .sens td:first-child { text-align: left; }
+  .sens tr.cur { background: #f5f9ff; }
+  .sens tr.cur td { font-weight: 700; }
+  .sens td.pos { color: #d92b2b; }
+  .sens td.neg { color: #12924f; }
+
+  .note {
+    margin-top: 20px; background: #fff8e6; border: 1px solid #ffe9b3; border-radius: 11px;
+    padding: 14px 16px; font-size: 12.5px; color: #8a6100; line-height: 1.7;
+  }
+  .note b { color: #7a5600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="logo">FBA</div>
+    <div>
+      <h1>FBA 利润速算器 · 交互演示</h1>
+      <p>这是扩展核心计算引擎的可视化预览 — 与插件内面板使用完全相同的算法</p>
+    </div>
+  </div>
+
+  <div class="layout">
+    <!-- 左：输入 -->
+    <div>
+      <div class="card">
+        <div class="card-title">站点</div>
+        <div class="sites" id="sites"></div>
+        <div class="field" style="margin-bottom:0">
+          <label>佣金类目</label>
+          <select id="category"></select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">价格与成本（<span id="curLabel">USD</span>）</div>
+        <div class="field">
+          <label>售价（页面价，欧洲/日本为含税价）</label>
+          <div class="ip"><span class="pre" id="p1">$</span><input type="number" id="salePrice" step="0.01" value="29.99"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>采购价 / 件</label>
+            <div class="ip"><span class="pre" id="p2">$</span><input type="number" id="cogs" step="0.01" value="5"></div></div>
+          <div class="field"><label>头程运费 / 件</label>
+            <div class="ip"><span class="pre" id="p3">$</span><input type="number" id="firstLeg" step="0.01" value="2"></div></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>其他费用 / 件</label>
+            <div class="ip"><span class="pre" id="p4">$</span><input type="number" id="extraFee" step="0.01" value="1.5"></div></div>
+          <div class="field"><label>关税率 %</label>
+            <div class="ip"><span class="pre">%</span><input type="number" id="dutyRate" step="0.1" placeholder="默认"></div></div>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label>佣金率覆盖 %（留空用类目值）</label>
+          <div class="ip"><span class="pre">%</span><input type="number" id="referralRate" step="0.1" placeholder="自动"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">商品规格</div>
+        <div class="row">
+          <div class="field"><label>重量（<span id="wUnit">lb</span>）</label>
+            <input type="number" id="weight" step="0.01" value="0.8"></div>
+          <div class="field"><label>仓储月数</label>
+            <input type="number" id="storageMonths" step="1" value="1"></div>
+        </div>
+        <div class="row three">
+          <div class="field"><label>长 cm</label><input type="number" id="dimsL" step="0.1" value="25"></div>
+          <div class="field"><label>宽 cm</label><input type="number" id="dimsW" step="0.1" value="18"></div>
+          <div class="field"><label>高 cm</label><input type="number" id="dimsH" step="0.1" value="8"></div>
+        </div>
+        <label class="chk"><input type="checkbox" id="includeStorage" checked> 计入月度仓储费（10–12 月按旺季价）</label>
+      </div>
+
+      <div class="card">
+        <div class="card-title">目标利润率预警</div>
+        <div class="slider-row">
+          <input type="range" id="target" min="0" max="60" step="1" value="20">
+          <span class="slider-val" id="targetVal">20%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右：结果 -->
+    <div>
+      <div class="card">
+        <div class="card-title">计算结果</div>
+        <div class="result-hero">
+          <div class="rh-top">
+            <div>
+              <div class="rh-label">净利润 / 件</div>
+              <div class="rh-profit" id="outProfit">—</div>
+            </div>
+            <div class="rh-side">
+              <div class="rh-label">利润率</div>
+              <div class="rh-margin" id="outMargin">—</div>
+              <div class="rh-sub" id="outRevenue">—</div>
+            </div>
+          </div>
+          <div id="verdict"></div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi"><div class="k">ROI</div><div class="v" id="kpiRoi">—</div><div class="hint">净利润 ÷ 采购+头程</div></div>
+          <div class="kpi"><div class="k">盈亏平衡价</div><div class="v" id="kpiBreak">—</div><div class="hint">净利润为 0 的售价</div></div>
+          <div class="kpi"><div class="k">总成本</div><div class="v" id="kpiCost">—</div><div class="hint">含佣金与 FBA 费</div></div>
+          <div class="kpi"><div class="k">FBA 分段</div><div class="v" id="kpiTier" style="font-size:13px">—</div><div class="hint" id="kpiTierFee">—</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">费用占比</div>
+        <div class="bar" id="bar"></div>
+        <table class="detail" id="detail"></table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">售价敏感度分析</div>
+        <table class="sens" id="sens"></table>
+      </div>
+
+      <div class="note">
+        <b>关于费率准确性：</b>本演示与插件使用同一套内置费率（2024–2025 亚马逊公开费率）作为默认基准。
+        亚马逊会不定期调价，且实际 FBA 费还受尺寸分段、体积重、低库存附加费、旺季附加费等因素影响。
+        插件版可在「设置 → 按站点覆盖费率」中按你的真实后台费率校准。盈利显示为红色、亏损为绿色（中国习惯）。
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../src/lib/sites.js"></script>
+<script src="../src/lib/calculator.js"></script>
+<script>
+(function () {
+  const SITES = window.FBA_SITES;
+  const Calc = window.FbaCalculator;
+  const $ = (id) => document.getElementById(id);
+
+  let currentSite = 'US';
+  let targetMargin = 0.20;
+
+  const COLORS = {
+    cogs: '#5b6b7f', firstLeg: '#7d8ca0', duty: '#a3b0c2',
+    referral: '#f2994a', fulfillment: '#2f8af5', storage: '#9b7ff0',
+    extras: '#cbd2db', profit: '#e5484d'
+  };
+
+  function fmt(v, sym) {
+    const a = Math.abs(v);
+    return sym + (a >= 1000
+      ? v.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : v.toFixed(2));
+  }
+  const pct = (v) => (v * 100).toFixed(1) + '%';
+
+  // 站点按钮
+  function buildSites() {
+    $('sites').innerHTML = Object.values(SITES).map((s) =>
+      `<button data-site="${s.marketplace}" class="${s.marketplace === currentSite ? 'on' : ''}">${s.marketplace} · ${s.label.split(' ')[0]}</button>`
+    ).join('');
+  }
+
+  function buildCategories() {
+    const site = SITES[currentSite];
+    const cats = site.referral.categories || {};
+    const opts = [`<option value="">默认 ${(site.referral.default * 100).toFixed(0)}%</option>`];
+    for (const [k, v] of Object.entries(cats)) {
+      opts.push(`<option value="${k}">${k} · ${(v * 100).toFixed(0)}%</option>`);
+    }
+    $('category').innerHTML = opts.join('');
+  }
+
+  function syncSite() {
+    const site = SITES[currentSite];
+    $('curLabel').textContent = site.currency;
+    ['p1', 'p2', 'p3', 'p4'].forEach((id) => { $(id).textContent = site.symbol; });
+    $('wUnit').textContent = site.sizeSystem === 'imperial' ? 'lb' : 'kg';
+    $('dutyRate').placeholder = (site.importDutyDefault * 100).toFixed(1);
+    buildSites();
+    buildCategories();
+  }
+
+  function readInputs() {
+    return {
+      site: currentSite,
+      salePrice: $('salePrice').value,
+      cogsPerUnit: $('cogs').value,
+      firstLegPerUnit: $('firstLeg').value,
+      extraFee: $('extraFee').value,
+      weight: $('weight').value,
+      lengthCm: $('dimsL').value,
+      widthCm: $('dimsW').value,
+      heightCm: $('dimsH').value,
+      storageMonths: $('storageMonths').value,
+      includeStorage: $('includeStorage').checked,
+      dutyRate: $('dutyRate').value,
+      referralOverride: $('referralRate').value,
+      category: $('category').value,
+      monthIndex: new Date().getMonth() + 1
+    };
+  }
+
+  function render() {
+    const input = readInputs();
+    const sym = SITES[currentSite].symbol;
+
+    if (!input.salePrice || parseFloat(input.salePrice) <= 0) {
+      $('outProfit').textContent = '—';
+      $('detail').innerHTML = '';
+      $('bar').innerHTML = '';
+      $('sens').innerHTML = '';
+      return;
+    }
+
+    const res = Calc.calculate(input, SITES);
+    if (!res.ok) { $('outProfit').textContent = '输入有误'; return; }
+    const b = res.breakdown, r = res.result;
+
+    // 主结果
+    $('outProfit').textContent = (r.netProfit >= 0 ? '+' : '-') + fmt(Math.abs(r.netProfit), sym);
+    $('outProfit').className = 'rh-profit ' + (r.netProfit >= 0 ? 'pos' : 'neg');
+    $('outMargin').textContent = pct(r.margin);
+    $('outMargin').style.color = r.netProfit >= 0 ? '#d92b2b' : '#12924f';
+    $('outRevenue').textContent = `售价 ${fmt(b.salePrice, sym)}` +
+      (b.vatAmount > 0 ? ` · 含 ${(b.vatRate * 100).toFixed(0)}% 税，净收入 ${fmt(b.netRevenue, sym)}` : '');
+
+    // 判定
+    let cls, txt;
+    if (r.margin >= targetMargin) { cls = 'good'; txt = `✓ 达标 — 高于目标 ${pct(targetMargin)}`; }
+    else if (r.margin > 0) { cls = 'mid'; txt = `⚠ 偏低 — 距目标 ${pct(targetMargin)} 差 ${(targetMargin * 100 - r.margin * 100).toFixed(1)} 个点`; }
+    else { cls = 'bad'; txt = '✕ 亏损 — 需提价或降本'; }
+    $('verdict').innerHTML = `<span class="verdict ${cls}">${txt}</span>`;
+
+    // KPI
+    $('kpiRoi').textContent = pct(r.roi);
+    $('kpiRoi').className = 'v ' + (r.roi >= 0 ? 'pos' : 'neg');
+    $('kpiBreak').textContent = r.breakEvenPrice > 0 ? fmt(r.breakEvenPrice, sym) : '—';
+    $('kpiCost').textContent = fmt(b.totalCost, sym);
+    $('kpiTier').textContent = b.fulfillmentTier.split(' ')[0];
+    $('kpiTierFee').textContent = fmt(b.fulfillmentFee, sym);
+
+    // 费用条
+    const parts = [
+      ['采购', 'cogs', b.cogs],
+      ['头程', 'firstLeg', b.firstLeg],
+      ['关税', 'duty', b.dutyFee],
+      ['佣金', 'referral', b.referralFee],
+      ['FBA 费', 'fulfillment', b.fulfillmentFee],
+      ['仓储', 'storage', b.storageFee],
+      ['其他', 'extras', b.extrasFee]
+    ].filter(([, , v]) => v > 0);
+    const profitForBar = Math.max(0, r.netProfit);
+    const total = parts.reduce((s, [, , v]) => s + v, 0) + profitForBar;
+    $('bar').innerHTML = parts.map(([nm, key, v]) => {
+      const w = v / total * 100;
+      return `<div style="width:${w}%;background:${COLORS[key]}" title="${nm} ${fmt(v, sym)}">${w > 9 ? nm : ''}</div>`;
+    }).join('') + (profitForBar > 0
+      ? `<div style="width:${profitForBar / total * 100}%;background:${COLORS.profit}" title="净利润">${profitForBar / total * 100 > 9 ? '利润' : ''}</div>`
+      : '');
+
+    // 明细表
+    let html = '';
+    const line = (nm, v, cls, dot) =>
+      `<tr class="${cls || ''}"><td>${dot ? `<span class="dot" style="background:${dot}"></span>` : ''}${nm}</td><td>${v}</td></tr>`;
+    html += line('售价（含税）', fmt(b.salePrice, sym), 'sub');
+    if (b.vatAmount > 0) {
+      html += line(`增值税 ${(b.vatRate * 100).toFixed(0)}%`, '-' + fmt(b.vatAmount, sym), 'sub');
+      html += line('不含税净收入', fmt(b.netRevenue, sym), 'sub');
+    }
+    html += line('采购成本', fmt(b.cogs, sym), '', COLORS.cogs);
+    html += line('头程运费', fmt(b.firstLeg, sym), '', COLORS.firstLeg);
+    html += line(`关税 ${(b.dutyRate * 100).toFixed(1)}%`, fmt(b.dutyFee, sym), '', COLORS.duty);
+    html += line(`平台佣金 ${(b.referralRate * 100).toFixed(1)}%`, fmt(b.referralFee, sym), '', COLORS.referral);
+    html += line('FBA 配送费', fmt(b.fulfillmentFee, sym), '', COLORS.fulfillment);
+    html += line('月度仓储费', fmt(b.storageFee, sym), '', COLORS.storage);
+    html += line('其他费用', fmt(b.extrasFee, sym), '', COLORS.extras);
+    html += line('成本合计', fmt(b.totalCost, sym), 'total');
+    html += `<tr class="total"><td>净利润</td><td style="color:${r.netProfit >= 0 ? '#d92b2b' : '#12924f'}">${(r.netProfit >= 0 ? '+' : '-') + fmt(Math.abs(r.netProfit), sym)}</td></tr>`;
+    const maxCogs = Calc.solveMaxCogs(input, SITES, targetMargin);
+    if (maxCogs > 0) {
+      html += `<tr class="sub"><td>维持 ${pct(targetMargin)} 利润的最高采购+头程</td><td>${fmt(maxCogs, sym)}</td></tr>`;
+    }
+    $('detail').innerHTML = html;
+
+    // 敏感度：售价 ±20%
+    const base = parseFloat(input.salePrice);
+    const rows = [];
+    for (let d = -20; d <= 20; d += 5) {
+      const p = base * (1 + d / 100);
+      const rr = Calc.calculate({ ...input, salePrice: p }, SITES);
+      rows.push({ delta: d, price: p, profit: rr.result.netProfit, margin: rr.result.margin });
+    }
+    let sh = `<tr><th>售价变动</th><th>售价</th><th>净利润</th><th>利润率</th></tr>`;
+    sh += rows.map((x) =>
+      `<tr class="${x.delta === 0 ? 'cur' : ''}">
+        <td>${x.delta === 0 ? '当前' : (x.delta > 0 ? '+' : '') + x.delta + '%'}</td>
+        <td>${fmt(x.price, sym)}</td>
+        <td class="${x.profit >= 0 ? 'pos' : 'neg'}">${(x.profit >= 0 ? '+' : '-') + fmt(Math.abs(x.profit), sym)}</td>
+        <td class="${x.margin >= 0 ? 'pos' : 'neg'}">${pct(x.margin)}</td>
+      </tr>`
+    ).join('');
+    $('sens').innerHTML = sh;
+  }
+
+  // 事件
+  $('sites').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-site]');
+    if (!btn) return;
+    currentSite = btn.dataset.site;
+    syncSite();
+    render();
+  });
+
+  ['salePrice', 'cogs', 'firstLeg', 'extraFee', 'weight', 'dimsL', 'dimsW', 'dimsH',
+    'storageMonths', 'dutyRate', 'referralRate', 'category', 'includeStorage'].forEach((id) => {
+    $(id).addEventListener('input', render);
+    $(id).addEventListener('change', render);
+  });
+
+  $('target').addEventListener('input', (e) => {
+    targetMargin = e.target.value / 100;
+    $('targetVal').textContent = e.target.value + '%';
+    render();
+  });
+
+  // 初始化
+  syncSite();
+  render();
+})();
+</script>
+</body>
+</html>

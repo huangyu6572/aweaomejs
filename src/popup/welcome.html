@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>欢迎使用 FBA 利润速算器</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(160deg, #f4f7fc 0%, #eaf1fb 100%);
+    color: #1a2029; min-height: 100vh; display: flex; justify-content: center; padding: 60px 20px;
+  }
+  .card {
+    background: #fff; border-radius: 18px; max-width: 720px; width: 100%; padding: 40px;
+    box-shadow: 0 16px 48px rgba(15,23,42,.10); border: 1px solid #e8ecf1;
+  }
+  .logo {
+    width: 56px; height: 56px; border-radius: 15px;
+    background: linear-gradient(135deg, #1f6feb, #2f8af5); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 17px; margin-bottom: 20px;
+  }
+  h1 { font-size: 26px; font-weight: 800; margin-bottom: 8px; letter-spacing: -.4px; }
+  .sub { color: #6b7684; font-size: 14.5px; line-height: 1.7; margin-bottom: 30px; }
+  h2 { font-size: 15px; font-weight: 700; margin: 26px 0 12px; display: flex; align-items: center; gap: 8px; }
+  h2 .num {
+    width: 22px; height: 22px; border-radius: 7px; background: #e8f1ff; color: #1f6feb;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 12px;
+  }
+  ol, ul { padding-left: 4px; list-style: none; }
+  li { font-size: 14px; line-height: 1.85; color: #3d4653; padding-left: 30px; position: relative; }
+  li::before {
+    content: ""; position: absolute; left: 12px; top: 11px; width: 6px; height: 6px;
+    border-radius: 2px; background: #2f8af5;
+  }
+  code {
+    background: #f2f5f9; padding: 1px 6px; border-radius: 5px; font-size: 12.5px;
+    font-family: ui-monospace, Menlo, Consolas, monospace; color: #1f6feb;
+  }
+  .steps { background: #f8fafd; border: 1px solid #e8ecf1; border-radius: 12px; padding: 18px 20px; margin-top: 12px; }
+  .steps li { padding-left: 26px; }
+  .steps li::before { background: #9b7ff0; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .feat { background: #f8fafd; border: 1px solid #e8ecf1; border-radius: 11px; padding: 14px; }
+  .feat b { display: block; font-size: 13.5px; margin-bottom: 4px; }
+  .feat span { font-size: 12.5px; color: #6b7684; line-height: 1.6; }
+  .note {
+    margin-top: 28px; background: #fff8e6; border: 1px solid #ffe9b3; border-radius: 11px;
+    padding: 14px 16px; font-size: 13px; color: #8a6100; line-height: 1.7;
+  }
+  .actions { margin-top: 30px; display: flex; gap: 12px; }
+  button {
+    padding: 12px 24px; border-radius: 10px; border: none; cursor: pointer;
+    font-size: 14px; font-weight: 600; font-family: inherit; transition: all .15s;
+  }
+  .primary { background: linear-gradient(135deg, #1f6feb, #2f8af5); color: #fff; }
+  .primary:hover { box-shadow: 0 6px 18px rgba(31,111,235,.3); transform: translateY(-1px); }
+  .ghost { background: #fff; border: 1px solid #dfe3e8; color: #4a5563; }
+  .ghost:hover { background: #f8fafc; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">FBA</div>
+    <h1>FBA 利润速算器已安装</h1>
+    <p class="sub">在亚马逊商品页侧边自动注入利润面板。输入采购价、头程运费和售价，立即看到扣除平台佣金、FBA 配送费、关税、仓储费之后的净利润与利润率——支持美国、欧洲、日本等 9 个站点费率。</p>
+
+    <h2><span class="num">1</span>打开任意亚马逊商品页</h2>
+    <div class="steps">
+      <ul>
+        <li>访问 <code>amazon.com</code> / <code>amazon.co.uk</code> / <code>amazon.de</code> / <code>amazon.co.jp</code> 等站点的任意商品详情页</li>
+        <li>页面右侧会自动出现蓝色面板，售价与商品重量/尺寸会被自动抓取填入</li>
+        <li>只需补上采购价和头程运费，结果实时刷新</li>
+      </ul>
+    </div>
+
+    <h2><span class="num">2</span>随时调整参数</h2>
+    <div class="grid">
+      <div class="feat"><b>多站点费率</b><span>面板顶部芯片一键切换站点，佣金率、FBA 分段费、VAT、关税同步更新</span></div>
+      <div class="feat"><b>类目精准佣金</b><span>选择类目自动套用对应佣金率，也可手动覆盖</span></div>
+      <div class="feat"><b>盈亏平衡价</b><span>直接给出不亏本的最低售价，以及达成目标利润率可承受的最高采购成本</span></div>
+      <div class="feat"><b>费用拆解条</b><span>可视化每项成本占比，一眼看出钱花在哪</span></div>
+    </div>
+
+    <h2><span class="num">3</span>点击工具栏图标打开主控台</h2>
+    <ul>
+      <li><b>速算</b>：不依赖商品页，手动输入随时测算</li>
+      <li><b>设置</b>：开关面板、目标利润率预警、按站点覆盖费率与汇率</li>
+      <li><b>费率速查</b>：快速浏览各站点的佣金表、FBA 分段费与税率</li>
+    </ul>
+
+    <div class="note">
+      <b>关于费率准确性：</b>内置费率基准为 2024–2025 年亚马逊公开费率。亚马逊会不定期调价，且实际费用还受尺寸分段、体积重、低库存附加费、旺季附加费等因素影响。建议在「设置 → 按站点覆盖费率」中按自己店铺后台的实际费率校准后再用于决策。
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="goAmazon">去亚马逊看看</button>
+      <button class="ghost" id="openSettings">打开设置</button>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('goAmazon').addEventListener('click', () => {
+      chrome.tabs.create({ url: 'https://www.amazon.com/' });
+    });
+    document.getElementById('openSettings').addEventListener('click', () => {
+      chrome.tabs.update({ url: chrome.runtime.getURL('popup/popup.html') });
+      // popup 不能在标签页中作为普通页面长期打开时，退化为打开设置说明
+      setTimeout(() => {
+        window.close();
+      }, 100);
+    });
+  </script>
+</body>
+</html>

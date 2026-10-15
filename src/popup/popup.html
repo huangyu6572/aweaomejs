@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FBA 利润速算器</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app">
+    <!-- 激活门禁遮罩 -->
+    <div class="gate" id="gate">
+      <div class="gate-card">
+        <div class="gate-ico">🔒</div>
+        <h2>需要激活码</h2>
+        <p>本工具为一次性授权使用，请输入激活码解锁。</p>
+        <input type="password" class="code-inp" id="gateCode" placeholder="请输入激活码" autocomplete="off" spellcheck="false">
+        <button class="primary" id="gateBtn">激活</button>
+        <div class="gate-msg" id="gateMsg"></div>
+        <div class="gate-note">激活后在本机永久有效</div>
+      </div>
+    </div>
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">FBA</span>
+        <div>
+          <h1>利润速算器</h1>
+          <p id="pageInfo">正在读取当前标签页…</p>
+        </div>
+      </div>
+      <label class="switch" title="在商品页显示侧边面板">
+        <input type="checkbox" id="enabled">
+        <span class="slider"></span>
+      </label>
+    </header>
+
+    <nav class="tabs">
+      <button class="tab on" data-tab="calc">速算</button>
+      <button class="tab" data-tab="settings">设置</button>
+      <button class="tab" data-tab="rates">费率速查</button>
+    </nav>
+
+    <!-- 速算面板 -->
+    <section class="tabpage on" id="page-calc">
+      <div class="row">
+        <div class="field">
+          <label>站点</label>
+          <select id="site"></select>
+        </div>
+        <div class="field">
+          <label>佣金类目</label>
+          <select id="category"></select>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group-title">价格与成本（<span id="curLabel">USD</span>）</div>
+        <div class="field">
+          <label>售价</label>
+          <div class="ip"><span class="pre" id="p1">$</span><input type="number" id="salePrice" step="0.01" min="0" placeholder="0.00"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>采购价/件</label>
+            <div class="ip"><span class="pre" id="p2">$</span><input type="number" id="cogs" step="0.01" min="0" placeholder="0.00"></div></div>
+          <div class="field"><label>头程运费/件</label>
+            <div class="ip"><span class="pre" id="p3">$</span><input type="number" id="firstLeg" step="0.01" min="0" placeholder="0.00"></div></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>其他费用/件</label>
+            <div class="ip"><span class="pre" id="p4">$</span><input type="number" id="extraFee" step="0.01" min="0" placeholder="广告/测评"></div></div>
+          <div class="field"><label>关税率 %</label>
+            <div class="ip"><span class="pre">%</span><input type="number" id="dutyRate" step="0.1" min="0" placeholder="默认"></div></div>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group-title">商品规格（选填）</div>
+        <div class="row">
+          <div class="field"><label>重量 (<span id="wUnit">lb</span>)</label><input type="number" id="weight" step="0.01" min="0"></div>
+          <div class="field"><label>仓储月数</label><input type="number" id="storageMonths" step="1" min="0" placeholder="1"></div>
+        </div>
+        <div class="row three">
+          <div class="field"><label>长 cm</label><input type="number" id="dimsL" step="0.1" min="0"></div>
+          <div class="field"><label>宽 cm</label><input type="number" id="dimsW" step="0.1" min="0"></div>
+          <div class="field"><label>高 cm</label><input type="number" id="dimsH" step="0.1" min="0"></div>
+        </div>
+        <div class="field" style="margin-top:8px">
+          <label>佣金率覆盖 %（留空用类目默认）</label>
+          <div class="ip"><span class="pre">%</span><input type="number" id="referralRate" step="0.1" min="0" placeholder="自动"></div>
+        </div>
+      </div>
+
+      <div class="result" id="result">
+        <div class="res-head">
+          <div>
+            <span class="res-label">净利润 / 件</span>
+            <span class="res-profit" id="outProfit">—</span>
+          </div>
+          <div class="res-right">
+            <span class="res-label">利润率</span>
+            <span class="res-margin" id="outMargin">—</span>
+          </div>
+        </div>
+        <div class="kpis">
+          <div class="kpi"><span>ROI</span><b id="kpiRoi">—</b></div>
+          <div class="kpi"><span>盈亏平衡价</span><b id="kpiBreak">—</b></div>
+          <div class="kpi"><span>总成本</span><b id="kpiCost">—</b></div>
+        </div>
+        <div class="detail" id="detail"></div>
+      </div>
+
+      <div class="actions">
+        <button id="btnCalc" class="primary">重新计算</button>
+        <button id="btnCopy" class="ghost">复制结果</button>
+      </div>
+    </section>
+
+    <!-- 设置 -->
+    <section class="tabpage" id="page-settings">
+      <div class="group">
+        <div class="group-title">通用</div>
+        <label class="line"><span>在亚马逊商品页注入侧边面板</span>
+          <input type="checkbox" id="setEnabled"></label>
+        <label class="line"><span>按域名自动识别站点</span>
+          <input type="checkbox" id="setAutoDetect"></label>
+        <label class="line"><span>计入月度仓储费</span>
+          <input type="checkbox" id="setStorage"></label>
+        <label class="line"><span>显示人民币折算（¥）</span>
+          <input type="checkbox" id="setShowCny"></label>
+        <label class="line"><span>折叠后显示悬浮球</span>
+          <input type="checkbox" id="setFab"></label>
+        <div class="field" style="margin-top:10px">
+          <label>面板初始位置</label>
+          <select id="setPosition">
+            <option value="right">右侧</option>
+            <option value="left">左侧</option>
+          </select>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <label>默认站点</label>
+          <select id="setDefaultSite"></select>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <label>目标利润率 %（低于此值时预警）</label>
+          <div class="ip"><span class="pre">%</span><input type="number" id="setTarget" step="1" min="0" max="200"></div>
+        </div>
+        <div class="field" style="margin-top:10px">
+          <label>平均仓储周转月数</label>
+          <input type="number" id="setMonths" step="1" min="0">
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group-title">汇率（1 外币 = ? 人民币）</div>
+        <div class="fx-grid" id="fxGrid"></div>
+        <div class="actions">
+          <button id="btnSaveFx" class="primary">保存汇率</button>
+          <button id="btnResetFx" class="ghost">恢复默认</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group-title">按站点覆盖费率</div>
+        <div class="field">
+          <label>选择站点</label>
+          <select id="ovSite"></select>
+        </div>
+        <div class="row">
+          <div class="field"><label>佣金率 %</label>
+            <div class="ip"><span class="pre">%</span><input type="number" id="ovReferral" step="0.1" min="0" placeholder="用默认"></div></div>
+          <div class="field"><label>关税率 %</label>
+            <div class="ip"><span class="pre">%</span><input type="number" id="ovDuty" step="0.1" min="0" placeholder="用默认"></div></div>
+        </div>
+        <div class="field"><label>VAT/消费税率 %</label>
+          <div class="ip"><span class="pre">%</span><input type="number" id="ovVat" step="0.1" min="0" placeholder="用默认"></div></div>
+        <div class="actions">
+          <button id="btnSaveOv" class="primary">保存覆盖</button>
+          <button id="btnClearOv" class="ghost">清除该站点覆盖</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group-title">激活状态</div>
+        <div class="license-row">
+          <span id="licStatus" class="lic-badge">—</span>
+          <button id="btnDeactivate" class="ghost" style="flex:0 0 auto;padding:6px 12px">撤销激活</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group-title">数据</div>
+        <div class="actions">
+          <button id="btnExport" class="ghost">导出配置</button>
+          <button id="btnImport" class="ghost">导入配置</button>
+          <button id="btnReset" class="danger">恢复默认</button>
+        </div>
+        <input type="file" id="fileImport" accept="application/json" style="display:none">
+      </div>
+    </section>
+
+    <!-- 费率速查 -->
+    <section class="tabpage" id="page-rates">
+      <div class="field">
+        <label>站点</label>
+        <select id="rateSite"></select>
+      </div>
+      <div id="ratesBody"></div>
+    </section>
+
+    <footer class="foot">
+      <span>费率基准 2024–2025，实际以亚马逊后台为准</span>
+      <a id="openDocs" href="#" target="_blank">官方费率</a>
+    </footer>
+  </div>
+  <script src="../lib/sites.js"></script>
+  <script src="../lib/cn.js"></script>
+  <script src="../lib/license.js"></script>
+  <script src="../lib/calculator.js"></script>
+  <script src="../lib/storage.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

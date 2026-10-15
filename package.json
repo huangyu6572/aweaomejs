@@ -1,0 +1,21 @@
+{
+  "name": "fba-profit-calculator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "亚马逊 FBA 利润速算器 —— 商品页侧边自动注入面板，实时计算扣除 FBA 费/佣金/关税后的净利润与利润率",
+  "keywords": ["amazon", "fba", "profit", "calculator", "chrome-extension", "cross-border-ecommerce"],
+  "license": "UNLICENSED",
+  "scripts": {
+    "test": "node tests/selftest.js",
+    "test:browser": "node tools/run-browser-tests.js",
+    "verify:install": "node tools/install-and-verify.js",
+    "icons": "node tools/make-icons.js",
+    "pack:zip": "node -e \"const fs=require('fs'),p=require('path');fs.mkdirSync('dist',{recursive:true});const a=require('child_process');a.execSync('cd src && zip -r ../dist/fba-profit-calculator-1.0.0.zip . -x \\\"*.DS_Store\\\"',{stdio:'inherit'})\""
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "ws": "^8.18.0"
+  }
+}

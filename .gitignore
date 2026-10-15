@@ -1,0 +1,29 @@
+# ---- 签名私钥（绝对不要提交）----
+key.pem
+*.pem
+*.crx
+
+# ---- 打包产物 ----
+dist/
+build/
+*.zip
+
+# ---- 依赖 ----
+node_modules/
+package-lock.json
+
+# ---- 测试运行产物 ----
+tests/fixtures/*.png
+*.log
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- 临时文件 ----
+*.tmp
+*.bak
+~$*

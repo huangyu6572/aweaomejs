@@ -1,0 +1,75 @@
+{
+  "manifest_version": 3,
+  "name": "FBA 利润速算器",
+  "version": "1.0.0",
+  "description": "在亚马逊商品页侧边自动注入利润计算面板，输入采购价、头程运费、售价，实时算出扣除 FBA 费用、佣金、关税后的净利润与利润率。支持美/欧/日多站点费率。",
+  "default_locale": "zh_CN",
+  "minimum_chrome_version": "102",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "FBA 利润速算器",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.amazon.com/*",
+        "https://www.amazon.co.uk/*",
+        "https://www.amazon.de/*",
+        "https://www.amazon.fr/*",
+        "https://www.amazon.it/*",
+        "https://www.amazon.es/*",
+        "https://www.amazon.nl/*",
+        "https://www.amazon.se/*",
+        "https://www.amazon.pl/*",
+        "https://www.amazon.co.jp/*",
+        "https://www.amazon.ca/*",
+        "https://www.amazon.com.mx/*",
+        "https://www.amazon.com.au/*",
+        "https://www.amazon.sg/*",
+        "https://www.amazon.in/*",
+        "https://www.amazon.ae/*",
+        "https://www.amazon.com.br/*",
+        "https://www.amazon.com.tr/*",
+        "https://www.amazon.sa/*",
+        "https://www.amazon.eg/*",
+        "https://www.amazon.com.be/*"
+      ],
+      "js": [
+        "lib/sites.js",
+        "lib/cn.js",
+        "lib/license.js",
+        "lib/calculator.js",
+        "lib/storage.js",
+        "content/panel.js"
+      ],
+      "css": [],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*.png"],
+      "matches": ["https://www.amazon.*/*"]
+    }
+  ]
+}

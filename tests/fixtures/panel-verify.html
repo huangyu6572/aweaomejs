@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FBA 利润速算器 · 面板验证</title>
+<style>
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; margin: 0; background: #eef2f7; }
+  .fake-amazon { max-width: 900px; margin: 24px auto; background: #fff; border-radius: 10px; padding: 24px; border: 1px solid #e0e5ec; }
+  .fake-amazon h1 { font-size: 22px; margin: 0 0 10px; }
+  .price { font-size: 28px; color: #B12704; font-weight: 700; }
+  .spec { font-size: 13px; color: #555; margin-top: 14px; line-height: 1.9; }
+  .banner {
+    max-width: 900px; margin: 16px auto; padding: 12px 16px; border-radius: 9px;
+    background: #e8f1ff; border: 1px solid #b9d6fb; color: #1b5fa8; font-size: 13px; line-height: 1.7;
+  }
+  .banner b { color: #12457d; }
+  .ctl { max-width: 900px; margin: 12px auto; display: flex; gap: 8px; flex-wrap: wrap; }
+  .ctl button {
+    padding: 8px 14px; border-radius: 8px; border: 1px solid #cfd8e3; background: #fff;
+    font-size: 12.5px; cursor: pointer; font-family: inherit; font-weight: 600; color: #45536a;
+  }
+  .ctl button:hover { background: #f5f8fc; border-color: #9db8dd; }
+  #log {
+    max-width: 900px; margin: 12px auto 40px; background: #1b2130; color: #c8d3e6;
+    border-radius: 9px; padding: 14px 16px; font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px; line-height: 1.75; white-space: pre-wrap; min-height: 60px;
+  }
+  #log .ok { color: #7ee39a; }
+  #log .no { color: #ff9b9b; }
+  #log .hd { color: #8ec5ff; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="banner">
+  <b>面板验证页</b> — 这个页面模拟亚马逊商品详情页的 DOM 结构，并加载扩展的真实 content script。
+  面板应出现在右侧；未激活时会先显示激活码输入框。输入 <b>123456aB!</b> 即可解锁。
+</div>
+
+<div class="ctl">
+  <button id="btnRunTests">运行断言测试</button>
+  <button id="btnDeactivate">撤销激活（回到锁屏）</button>
+  <button id="btnActivate">一键激活</button>
+</div>
+
+<div id="log">等待面板初始化…</div>
+
+<!-- 模拟亚马逊商品页 DOM -->
+<div class="fake-amazon">
+  <div id="nav-belt"><input id="ASIN" name="ASIN" value="B08TEST001" type="hidden"></div>
+  <div id="wayfinding-breadcrumbs_feature_div">
+    <ul><li><a href="#">电子产品</a></li><li><a href="#">电脑及配件</a></li></ul>
+  </div>
+  <h1 id="productTitle">测试商品 · 无线鼠标（用于扩展验证）</h1>
+  <div id="corePriceDisplay_desktop_feature_div">
+    <span class="a-price"><span class="a-offscreen">$29.99</span></span>
+  </div>
+  <div class="price">$29.99</div>
+  <div id="productDetails_techSpec_section_1">
+    <table>
+      <tr><th>Item Weight</th><td>12.8 ounces</td></tr>
+      <tr><th>Product Dimensions</th><td>4.7 x 2.6 x 1.6 inches</td></tr>
+    </table>
+  </div>
+  <div class="spec">品牌：TestBrand ｜ 型号：TM-2026 ｜ 上架时间：2026-01</div>
+</div>
+
+<script src="../../src/lib/sites.js"></script>
+<script src="../../src/lib/cn.js"></script>
+<script src="../../src/lib/license.js"></script>
+<script src="../../src/lib/calculator.js"></script>
+<script src="../../src/lib/storage.js"></script>
+<script src="../../src/content/panel.js"></script>
+
+<script>
+(function () {
+  const out = document.getElementById('log');
+  const lines = [];
+  function log(msg, cls) {
+    lines.push(cls ? `<span class="${cls}">${msg}</span>` : msg);
+    out.innerHTML = lines.join('\n');
+  }
+  function reset() { lines.length = 0; out.innerHTML = ''; }
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  function getShadow() {
+    const h = document.getElementById('fba-profit-calculator-host');
+    return h && h.shadowRoot ? h.shadowRoot : null;
+  }
+
+  let pass = 0, fail = 0;
+  function assert(name, cond, detail) {
+    if (cond) { pass++; log('  ✓ ' + name + (detail ? ' — ' + detail : ''), 'ok'); }
+    else { fail++; log('  ✗ ' + name + (detail ? ' — ' + detail : ''), 'no'); }
+  }
+
+  async function runTests() {
+    reset();
+    log('═══ FBA 速算器 · 浏览器端验证 ═══', 'hd');
+    log('');
+
+    log('[1] 模块加载', 'hd');
+    assert('FBA_SITES 已加载', typeof window.FBA_SITES === 'object');
+    assert('FbaCN 已加载', typeof window.FbaCN === 'object');
+    assert('FbaLicense 已加载', typeof window.FbaLicense === 'object');
+    assert('FbaCalculator 已加载', typeof window.FbaCalculator === 'object');
+    assert('FbaStorage 已加载', typeof window.FbaStorage === 'object');
+    assert('panel.js 已执行', !!window.__FBA_PANEL_LOADED__);
+
+    log('');
+    log('[2] 激活码校验', 'hd');
+    assert('正确码 123456aB! 通过', window.FbaLicense.verify('123456aB!').ok);
+    assert('错误大小写被拒', !window.FbaLicense.verify('123456ab!').ok);
+    assert('缺字符被拒', !window.FbaLicense.verify('123456aB').ok);
+    assert('空串被拒', !window.FbaLicense.verify('').ok);
+    assert('脱敏格式正确', window.FbaLicense.mask('123456aB!') === '12****B!',
+      window.FbaLicense.mask('123456aB!'));
+
+    log('');
+    log('[3] 面板注入', 'hd');
+    const h = document.getElementById('fba-profit-calculator-host');
+    assert('面板宿主已创建', !!h);
+    assert('Shadow DOM 已建立', !!getShadow());
+    const sr = getShadow();
+    if (sr) {
+      assert('锁屏元素存在', !!sr.getElementById('lockScreen'));
+      assert('主内容容器存在', !!sr.getElementById('bd'));
+      assert('激活输入框存在', !!sr.getElementById('lockCode'));
+      assert('未激活时站点芯片为空', sr.querySelectorAll('#siteChips span').length === 0,
+        sr.querySelectorAll('#siteChips span').length + ' 个');
+    }
+
+    log('');
+    log('[4] 激活流程', 'hd');
+    if (sr) {
+      await window.FbaLicense.deactivate();
+      const activated0 = await window.FbaLicense.isActivated();
+
+      // 输入错误码
+      sr.getElementById('lockCode').value = 'badcode';
+      sr.getElementById('btnActivate').click();
+      await sleep(400);
+      const msgAfterBad = sr.getElementById('lockMsg').textContent;
+      assert('错误码显示提示', /无效|不能为空|长度/.test(msgAfterBad), '"' + msgAfterBad + '"');
+      assert('错误码后仍未激活', !(await window.FbaLicense.isActivated()));
+
+      // 输入正确码
+      sr.getElementById('lockCode').value = '123456aB!';
+      sr.getElementById('lockCode').dispatchEvent(new Event('input', { bubbles: true }));
+      sr.getElementById('btnActivate').click();
+      await sleep(900);
+      assert('正确码激活成功', await window.FbaLicense.isActivated());
+      assert('锁屏已隐藏', sr.getElementById('lockScreen').classList.contains('dim'));
+      assert('主内容已显示', !sr.getElementById('bd').classList.contains('dim'));
+    }
+
+    log('');
+    log('[4b] 激活后 UI 渲染', 'hd');
+    if (sr) {
+      const siteChips = sr.querySelectorAll('#siteChips span');
+      assert('站点芯片已生成', siteChips.length >= 8, siteChips.length + ' 个');
+      assert('当前站点芯片高亮', !!sr.querySelector('#siteChips span.on'),
+        (sr.querySelector('#siteChips span.on') || {}).textContent || '无');
+      const catChips = sr.querySelectorAll('#catSel span');
+      assert('类目芯片已生成', catChips.length >= 5, catChips.length + ' 个');
+      assert('币种符号已渲染', sr.getElementById('symSale').textContent.length > 0,
+        sr.getElementById('symSale').textContent);
+      assert('人民币显示行存在', !!sr.getElementById('outProfitCny'));
+    }
+
+    log('');
+    log('[5] 自动抓取', 'hd');
+    let grabbedW = 0, grabbedL = 0;
+    if (sr) {
+      const price = sr.getElementById('salePrice').value;
+      assert('售价抓取正确', price === '29.99', '$' + price);
+      const w = sr.getElementById('weight').value;
+      grabbedW = parseFloat(w) || 0;
+      assert('重量抓取并换算', grabbedW > 0, w + ' lb');
+      const dl = sr.getElementById('dimsL').value;
+      grabbedL = parseFloat(dl) || 0;
+      assert('尺寸抓取并换算', grabbedL > 0, dl + ' cm');
+      assert('ASIN 显示正确', /B08TEST001/.test(sr.getElementById('asinLabel').textContent),
+        sr.getElementById('asinLabel').textContent);
+    }
+
+    log('');
+    log('[6] 实时计算', 'hd');
+    if (sr) {
+      sr.getElementById('cogs').value = '5';
+      sr.getElementById('firstLeg').value = '2';
+      sr.getElementById('storageMonths').value = '0';
+      ['cogs', 'firstLeg', 'storageMonths'].forEach((id) =>
+        sr.getElementById(id).dispatchEvent(new Event('input', { bubbles: true })));
+      await sleep(300);
+
+      const profitTxt = sr.getElementById('outProfit').textContent;
+      const marginTxt = sr.getElementById('outMargin').textContent;
+      const cnyTxt = sr.getElementById('outProfitCny').textContent;
+      assert('净利润已输出', profitTxt !== '—' && profitTxt.length > 1, profitTxt);
+      assert('利润率已输出', marginTxt !== '—', marginTxt);
+      assert('人民币折算已输出', /¥/.test(cnyTxt), cnyTxt.trim());
+
+      // 数值校验：手动核对
+      const r = window.FbaCalculator.calculate({
+        site: 'US', salePrice: 29.99, cogsPerUnit: 5, firstLegPerUnit: 2,
+        weight: grabbedW, lengthCm: grabbedL, storageMonths: 0, includeStorage: false
+      }, window.FBA_SITES);
+      assert('佣金 15% = $4.50', Math.abs(r.breakdown.referralFee - 4.5) < 0.01,
+        '$' + r.breakdown.referralFee);
+      assert('FBA 费按重量匹配', r.breakdown.fulfillmentFee > 0,
+        '$' + r.breakdown.fulfillmentFee + ' (' + r.breakdown.fulfillmentTier.split(' ')[0] + ')');
+      assert('关税 7.5% ≈ $0.53', Math.abs(r.breakdown.dutyFee - 0.525) < 0.01,
+        '$' + r.breakdown.dutyFee);
+      const expectedCNY = window.FbaCN.toCNY(r.result.netProfit, 'USD', null);
+      assert('人民币换算 = 净利润 × 7.15',
+        Math.abs(expectedCNY - r.result.netProfit * 7.15) < 0.01,
+        '$' + r.result.netProfit + ' → ¥' + expectedCNY.toFixed(2));
+
+      // 盈亏平衡价
+      const be = r.result.breakEvenPrice;
+      const chk = window.FbaCalculator.calculate({
+        site: 'US', salePrice: be, cogsPerUnit: 5, firstLegPerUnit: 2,
+        weight: grabbedW, storageMonths: 0, includeStorage: false
+      }, window.FBA_SITES);
+      assert('盈亏平衡价处利润≈0', Math.abs(chk.result.netProfit) < 0.05,
+        '平衡价 $' + be);
+    }
+
+    log('');
+    log('[7] 多站点切换', 'hd');
+    if (sr) {
+      const chips = sr.querySelectorAll('#siteChips span');
+      const jp = Array.from(chips).find((c) => c.getAttribute('data-site') === 'JP');
+      if (jp) {
+        jp.click();
+        await sleep(400);
+        assert('切换到日本站', sr.getElementById('siteChip').textContent === 'JP');
+        assert('币种符号切换为 ¥', sr.getElementById('symSale').textContent === '¥');
+        assert('重量单位切换为 kg', sr.getElementById('wUnit').textContent === 'kg');
+        sr.getElementById('salePrice').value = '3980';
+        sr.getElementById('cogs').value = '600';
+        sr.getElementById('firstLeg').value = '150';
+        sr.getElementById('weight').value = '0.4';
+        ['salePrice','cogs','firstLeg','weight'].forEach((id) =>
+          sr.getElementById(id).dispatchEvent(new Event('input', { bubbles: true })));
+        await sleep(300);
+        assert('日本站计算输出', sr.getElementById('outProfit').textContent !== '—',
+          sr.getElementById('outProfit').textContent);
+        // 切回美国站
+        const us = Array.from(chips).find((c) => c.getAttribute('data-site') === 'US');
+        if (us) { us.click(); await sleep(300); }
+      } else {
+        assert('日本站芯片存在', false);
+      }
+    }
+
+    log('');
+    log('[8] 存储持久化', 'hd');
+    const st = await window.FbaStorage.get();
+    assert('设置可读取', !!st && st.enabled === true);
+    assert('showCNY 默认开启', st.showCNY === true);
+    const lic = await window.FbaLicense.getStatus();
+    assert('激活状态已持久化', lic.activated === true, '脱敏 ' + lic.codeMask);
+
+    log('');
+    log('═══════════════════════════════', 'hd');
+    if (fail === 0) {
+      log(`全部通过：${pass} 项断言 ✓`, 'ok');
+    } else {
+      log(`结果：${pass} 通过 / ${fail} 失败`, 'no');
+    }
+    log('═══════════════════════════════', 'hd');
+    window.__TEST_RESULT__ = { pass, fail, total: pass + fail };
+  }
+
+  // 按钮
+  document.getElementById('btnRunTests').addEventListener('click', runTests);
+  document.getElementById('btnDeactivate').addEventListener('click', async () => {
+    await window.FbaLicense.deactivate();
+    location.reload();
+  });
+  document.getElementById('btnActivate').addEventListener('click', async () => {
+    await window.FbaLicense.activate('123456aB!');
+    location.reload();
+  });
+
+  // 页面加载后延迟自动跑一次
+  window.addEventListener('load', () => setTimeout(runTests, 2500));
+})();
+</script>
+</body>
+</html>
